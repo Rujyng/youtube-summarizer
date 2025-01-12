@@ -1,9 +1,11 @@
 from dotenv import load_dotenv
+import os
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
+# os.getenv()
 
 def summarize_text(transcript, model="gpt-3.5-turbo", summary_format="Any format", max_tokens=300):
     """

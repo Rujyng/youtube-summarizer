@@ -1,0 +1,7 @@
+langchain==0.3.14
+langchain-core==0.3.29
+langchain-openai==0.2.14
+youtube-transcript-api==0.6.3
+openai==1.59.3
+python-dotenv==1.0.1
+tiktoken==0.8.0

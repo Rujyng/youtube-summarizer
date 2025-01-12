@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  YoutubeSummarizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambda_function.lambda_handler  # Points to the lambda_function.py file and its lambda_handler function
+      Runtime: python3.9                       # Python runtime
+      CodeUri: .                               # Points to the root directory containing your code
+      MemorySize: 128                          # Memory allocation (optional)
+      Timeout: 10                              # Timeout in seconds (optional)
+      Policies:
+        - AWSLambdaBasicExecutionRole          # Basic role for execution
