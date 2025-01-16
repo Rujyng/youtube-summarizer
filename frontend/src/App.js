@@ -8,19 +8,53 @@ function App() {
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const extractVideoID = (url) => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname === "www.youtube.com" || urlObj.hostname === "youtube.com") {
+        return urlObj.searchParams.get("v");
+      } else if (urlObj.hostname === "youtu.be") {
+        return urlObj.pathname.substring(1);
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("Invalid YouTube URL:", error);
+      return null;
+    }
+  };
+
   const fetchSummary = async () => {
+    const videoID = extractVideoID(videoURL);
+
+    if (!videoID) {
+      setSummary("Invalid YouTube URL. Please enter a valid YouTube video URL.");
+      return;
+    }
+ 
     setLoading(true);
     try {
-      const response = await axios.post("https://ed0xwg2y74.execute-api.us-east-2.amazonaws.com/prod/summarizer", {
-        video_url: videoURL,
+      // // AWS API
+      // const response = await axios.post(
+      //   "https://1mx27lhv57.execute-api.us-east-2.amazonaws.com/summarizer",
+      //   {
+      //     video_id: videoID,
+      //     summary_format: summaryFormat,
+      //     refinement_request: refinementRequest || null,
+      //   }
+      // );
+
+      // Local API
+      const response = await axios.post("http://localhost:5000/summarize", {
+        video_id: videoID,
         summary_format: summaryFormat,
         refinement_request: refinementRequest || null,
       });
       const data = response.data;
-      setSummary(data.summary);
+      setSummary(data.summary || "No summary generated.");
     } catch (error) {
       console.error("Error fetching summary:", error);
-      setSummary("An error occurred.");
+      setSummary("An error occurred while fetching the summary.");
     }
     setLoading(false);
   };
