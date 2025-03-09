@@ -1,0 +1,1 @@
+A YouTube video summarization tool with a React frontend and a backend leveraging AWS API Gateway, Lambda, and LangChain. Employed AWS EC2 for deployment and AWS S3 for storage to ensure scalability and seamless data handling.
