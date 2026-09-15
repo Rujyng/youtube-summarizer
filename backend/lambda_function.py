@@ -65,140 +65,132 @@
 #     run()
 
 # # ====================================== For lambda ======================================
-# import json
-# from src.summarizer import summarize_text, refine_summary
-# from youtube_transcript_api import YouTubeTranscriptApi
-
-# def get_transcript(video_id):
-#     try:
-#         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-#         transcript = " ".join([entry['text'] for entry in transcript_list])
-#         return transcript
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-#         return None
-
-# def lambda_handler(event, context):
-#     """
-#     AWS Lambda handler for generating video summaries and optionally refining them.
-#     Expects JSON input with the following fields:
-#     - video_id: YouTube video ID (e.g., "I76wvt0aEE4").
-#     - summary_format: (Optional) Format for the summary ("Any format", "Bullet points", etc.).
-#     - refinement_request: (Optional) Refinement instructions for the summary.
-#     """
-#     try:
-#         # Parse the JSON input
-#         body = json.loads(event["body"])  # Input from API Gateway
-#         video_id = body.get("video_id")  # Directly accept the video ID
-#         summary_format = body.get("summary_format", "Any format")
-#         refinement_request = body.get("refinement_request")
-
-#         # Check if video_id is provided
-#         if not video_id:
-#             return {
-#                 "statusCode": 400,
-#                 "body": json.dumps({"error": "video_id is required in the request body."})
-#             }
-
-#         # Fetch transcript
-#         transcript = get_transcript(video_id)
-#         if not transcript:
-#             return {
-#                 "statusCode": 500,
-#                 "body": json.dumps({"error": "Transcript not found for the given video ID."})
-#             }
-
-#         # Generate summary
-#         summary = summarize_text(transcript, summary_format=summary_format)
-#         if not summary:
-#             return {
-#                 "statusCode": 500,
-#                 "body": json.dumps({"error": "Failed to generate summary."})
-#             }
-
-#         # Apply refinement if requested
-#         if refinement_request:
-#             summary = refine_summary(summary, refinement_request)
-
-#         # Return the result
-#         return {
-#             "statusCode": 200,
-#             "body": json.dumps({
-#                 "summary": summary,
-#                 "length_original": len(transcript),
-#                 "length_summary": len(summary),
-#                 "compression_ratio": round(len(summary) / len(transcript) * 100, 2)
-#             })
-#         }
-
-#     except Exception as e:
-#         # Handle any unexpected errors
-#         print(f"Error: {e}")
-#         return {
-#             "statusCode": 500,
-#             "body": json.dumps({"error": str(e)}),
-#         }
-
-# ====================================== For local api ======================================
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import json
 from src.summarizer import summarize_text, refine_summary
 from youtube_transcript_api import YouTubeTranscriptApi
-
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 def get_transcript(video_id):
     try:
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
         transcript = " ".join([entry['text'] for entry in transcript_list])
-        return transcript, None
+        return transcript
     except Exception as e:
-        return None, f"An error occurred: {str(e)}"
+        print(f"An error occurred: {e}")
+        return None
 
-@app.route('/summarize', methods=['POST', 'OPTIONS'])
-def summarize():
-    if request.method == 'OPTIONS':
-        # Preflight request
-        response = jsonify({"message": "Preflight request success"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-        response.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
-        return response, 200
-    
+def lambda_handler(event, context):
+    """
+    AWS Lambda handler for generating video summaries and optionally refining them.
+    Expects JSON input with the following fields:
+    - video_id: YouTube video ID (e.g., "I76wvt0aEE4").
+    - summary_format: (Optional) Format for the summary ("Any format", "Bullet points", etc.).
+    - refinement_request: (Optional) Refinement instructions for the summary.
+    """
     try:
-        data = request.get_json()
-        video_id = data.get("video_id")
-        summary_format = data.get("summary_format", "Any format")
-        refinement_request = data.get("refinement_request")
+        # Parse the JSON input
+        body = json.loads(event["body"])  # Input from API Gateway
+        video_id = body.get("video_id")  # Directly accept the video ID
+        summary_format = body.get("summary_format", "Any format")
+        refinement_request = body.get("refinement_request")
 
-        # Fetch the transcript
-        transcript, error = get_transcript(video_id)
-        if error:
-            return jsonify({"error": error}), 500
+        # Check if video_id is provided
+        if not video_id:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({"error": "video_id is required in the request body."})
+            }
 
-        # Generate the summary
+        # Fetch transcript
+        transcript = get_transcript(video_id)
+        if not transcript:
+            return {
+                "statusCode": 500,
+                "body": json.dumps({"error": "Transcript not found for the given video ID."})
+            }
+
+        # Generate summary
         summary = summarize_text(transcript, summary_format=summary_format)
         if not summary:
-            return jsonify({"error": "Failed to generate summary."}), 500
+            return {
+                "statusCode": 500,
+                "body": json.dumps({"error": "Failed to generate summary."})
+            }
 
         # Apply refinement if requested
         if refinement_request:
             summary = refine_summary(summary, refinement_request)
 
-        response = jsonify({
-            "summary": summary,
-            "length_original": len(transcript),
-            "length_summary": len(summary),
-            "compression_ratio": round(len(summary) / len(transcript) * 100, 2)
-        })
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
+        # Return the result
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "summary": summary,
+                "length_original": len(transcript),
+                "length_summary": len(summary),
+                "compression_ratio": round(len(summary) / len(transcript) * 100, 2)
+            })
+        }
 
     except Exception as e:
-        response = jsonify({"error": str(e)})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 500
+        # Handle any unexpected errors
+        print(f"Error: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)}),
+        }
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+# ====================================== For local backend ======================================
+# from flask import Flask, request, jsonify
+# from flask_cors import CORS
+# from src.summarizer import summarize_text, refine_summary
+# from youtube_transcript_api import YouTubeTranscriptApi
+
+# app = Flask(__name__)
+# CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
+# def get_transcript(video_id):
+#     try:
+#         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+#         transcript = " ".join([entry['text'] for entry in transcript_list])
+#         return transcript, None
+#     except Exception as e:
+#         return None, f"An error occurred: {str(e)}"
+
+# @app.route('/summarize', methods=['POST'])
+# def summarize():
+#     try:
+#         data = request.get_json()
+#         video_id = data.get("video_id")
+#         summary_format = data.get("summary_format", "Any format")
+#         refinement_request = data.get("refinement_request")
+
+#         # Fetch the transcript
+#         transcript, error = get_transcript(video_id)
+#         if error:
+#             return jsonify({"error": error}), 500
+
+#         # Generate the summary
+#         summary = summarize_text(transcript, summary_format=summary_format)
+#         if not summary:
+#             return jsonify({"error": "Failed to generate summary."}), 500
+
+#         # Apply refinement if requested
+#         if refinement_request:
+#             summary = refine_summary(summary, refinement_request)
+
+#         response = jsonify({
+#             "summary": summary,
+#             "length_original": len(transcript),
+#             "length_summary": len(summary),
+#             "compression_ratio": round(len(summary) / len(transcript) * 100, 2)
+#         })
+#         response.headers.add("Access-Control-Allow-Origin", "*")
+#         return response
+
+#     except Exception as e:
+#         response = jsonify({"error": str(e)})
+#         response.headers.add("Access-Control-Allow-Origin", "*")
+#         return response, 500
+
+# if __name__ == "__main__":
+#     app.run(debug=True, port=5000)
