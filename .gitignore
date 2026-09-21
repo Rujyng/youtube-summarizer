@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 venv/
+backend/data/*.db
 
 # React-specific files
 node_modules/
@@ -10,3 +11,7 @@ build/
 
 # Environment variables
 .env
+
+# Local credential/proxy artifacts
+squidpasswords
+*.htpasswd

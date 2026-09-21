@@ -1,1 +1,10 @@
-A YouTube video summarization tool with a React frontend and a backend leveraging AWS API Gateway, Lambda, and LangChain. Employed AWS EC2 for deployment and AWS S3 for storage to ensure scalability and seamless data handling.
+This project is being refactored from a simple YouTube summarizer into a backend-only playthrough catch-up summarization pipeline.
+
+Initial focus:
+- transcript ingestion
+- timestamp preservation
+- chunking
+- structured event extraction
+- provenance
+- playthrough state
+- spoiler-safe catch-up generation
